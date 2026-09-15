@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/loja-qualidade/test-package-v1.json",
+  "title": "Pacote de casos do Laboratorio Loja Qualidade",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "cases"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["identifier", "requirement_id", "description", "scenario_type", "operation", "inputs", "expected"],
+        "properties": {
+          "identifier": {"type": "string", "pattern": "^[A-Za-z0-9_-]{1,60}$"},
+          "requirement_id": {"enum": ["REQ-CAT-001", "REQ-CAR-001", "REQ-CUP-001", "REQ-CUP-002", "REQ-EST-001", "REQ-PED-001", "REQ-PED-002", "REQ-PAG-001"]},
+          "description": {"type": "string", "minLength": 1, "maxLength": 240},
+          "scenario_type": {"enum": ["relevant_risk", "boundary", "exception", "regression", "mandatory"]},
+          "operation": {"enum": ["calculate_cart", "apply_coupon", "check_stock", "checkout", "payment", "repeat_checkout"]},
+          "inputs": {"type": "object"},
+          "expected": {"type": "object", "minProperties": 1}
+        }
+      }
+    }
+  }
+}
+
