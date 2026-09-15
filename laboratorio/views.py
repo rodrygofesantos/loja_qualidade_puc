@@ -266,7 +266,13 @@ def gate(request):
     if request.method == "POST":
         try:
             evaluation = evaluate_gate(request.user, state.candidate)
-            messages.success(request, f"Avaliacao {evaluation.evaluation_id}: {evaluation.status}.")
+            message = f"Avaliacao {evaluation.evaluation_id}: {evaluation.status}."
+            if evaluation.status == GateEvaluation.BLOCKED:
+                messages.error(request, message)
+            elif evaluation.status == GateEvaluation.INSUFFICIENT:
+                messages.warning(request, message)
+            else:
+                messages.success(request, message)
         except RuntimeError as exc:
             messages.error(request, str(exc))
         return redirect("laboratorio:gate")

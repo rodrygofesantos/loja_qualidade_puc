@@ -122,3 +122,13 @@ def test_release_endpoint_rejects_stale_evaluation(client, demo_user):
     assert response.status_code == 200
     assert ReleaseSimulation.objects.count() == 0
     assert b"desatualizada" in response.content
+
+
+@pytest.mark.django_db
+@pytest.mark.engenharia
+def test_blocked_gate_message_is_rendered_as_error(client, demo_user):
+    client.force_login(demo_user)
+    response = client.post(reverse("laboratorio:gate"), follow=True)
+    assert response.status_code == 200
+    assert b"BLOQUEADO" in response.content
+    assert b"alert-error" in response.content
