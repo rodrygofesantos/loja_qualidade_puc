@@ -1,0 +1,13 @@
+<ol class="activity-steps">
+  {% for step in steps %}
+    <li class="activity-step activity-step-{{ step.status }}"{% if step.status == 'current' %} aria-current="step"{% endif %}>
+      <a href="{% url step.url_name %}">
+        <span class="step-marker" aria-hidden="true">{% if step.status == 'complete' %}✓{% else %}{{ step.number }}{% endif %}</span>
+        <span class="step-content">
+          <strong>{{ step.label }}</strong>
+          <small>{{ step.status_label }} · estimativa {{ step.duration }}</small>
+        </span>
+      </a>
+    </li>
+  {% endfor %}
+</ol>

@@ -52,7 +52,7 @@ A restauração é deliberadamente separada e exige confirmação:
 python setup_lab.py reset --confirm
 ```
 
-Ela também está em **Laboratório → Restaurar**. A ação remove o progresso da conta demonstrativa e recria a base didática; não altera o Git nem o histórico bruto reproduzível.
+Ela também está em **Opções da atividade → Reiniciar atividade**. A ação remove o progresso da conta demonstrativa e recria a base didática; não altera o Git nem o histórico bruto reproduzível.
 
 ## Diagnóstico
 

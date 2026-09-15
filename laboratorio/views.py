@@ -13,11 +13,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from laboratorio.activity import build_activity_summary
 from laboratorio.bot import QUESTIONS, answer
 from laboratorio.data_pipeline import BASE_DATE, SEED, data_paths, inspect_raw, prepare_data
 from laboratorio.executor import execute_cases
 from laboratorio.forms import ReportForm, TestCaseForm
-from laboratorio.gate import correction_evidence, evaluate_gate
+from laboratorio.gate import correction_evidence, evaluate_gate, evaluation_freshness
 from laboratorio.ml import load_artifact
 from laboratorio.models import (
     Candidate,
@@ -42,17 +43,17 @@ def _state(request):
 @login_required
 def overview(request):
     state = _state(request)
-    return render(
-        request,
-        "laboratorio/overview.html",
-        {
-            "candidate": state.candidate,
-            "scenario": state.scenario,
-            "test_count": request.user.test_cases.count(),
-            "execution_count": request.user.test_executions.count(),
-            "latest_gate": GateEvaluation.objects.filter(owner=request.user, candidate=state.candidate).first(),
-        },
-    )
+    context = build_activity_summary(request.user, state)
+    gate_error = request.session.get("gate_error")
+    if gate_error and gate_error.get("candidate_code") == state.candidate.code:
+        context.update(
+            {
+                "gate_kind": "error",
+                "gate_label": "Erro na avaliação",
+                "gate_error": gate_error.get("message"),
+            }
+        )
+    return render(request, "laboratorio/overview.html", context)
 
 
 @login_required
@@ -266,6 +267,7 @@ def gate(request):
     if request.method == "POST":
         try:
             evaluation = evaluate_gate(request.user, state.candidate)
+            request.session.pop("gate_error", None)
             message = f"Avaliacao {evaluation.evaluation_id}: {evaluation.status}."
             if evaluation.status == GateEvaluation.BLOCKED:
                 messages.error(request, message)
@@ -274,9 +276,34 @@ def gate(request):
             else:
                 messages.success(request, message)
         except RuntimeError as exc:
+            request.session["gate_error"] = {
+                "candidate_code": state.candidate.code,
+                "message": str(exc),
+                "occurred_at": timezone.now().isoformat(),
+            }
             messages.error(request, str(exc))
         return redirect("laboratorio:gate")
-    return render(request, "laboratorio/gate.html", {"evaluations": GateEvaluation.objects.filter(owner=request.user, candidate=state.candidate)[:10], "config": GateConfig.objects.first()})
+    evaluations = list(
+        GateEvaluation.objects.filter(owner=request.user, candidate=state.candidate)
+        .select_related("candidate", "config")
+        .order_by("-created_at", "-pk")[:10]
+    )
+    for evaluation in evaluations:
+        evaluation.is_current, evaluation.stale_reasons = evaluation_freshness(
+            request.user, state, evaluation
+        )
+    gate_error = request.session.get("gate_error")
+    if gate_error and gate_error.get("candidate_code") != state.candidate.code:
+        gate_error = None
+    return render(
+        request,
+        "laboratorio/gate.html",
+        {
+            "evaluations": evaluations,
+            "config": GateConfig.objects.first(),
+            "gate_error": gate_error,
+        },
+    )
 
 
 @login_required
@@ -301,9 +328,10 @@ def gate_config(request):
 def release(request):
     state = _state(request)
     shown = get_object_or_404(GateEvaluation, evaluation_id=request.POST.get("evaluation_id"), owner=request.user, candidate=state.candidate)
-    newest_config = GateConfig.objects.first()
-    if shown.config_id != newest_config.pk or shown.evidence_snapshot.get("candidate_revision") != state.candidate.code_revision:
-        messages.error(request, "A avaliacao exibida esta desatualizada. Execute o Gate novamente.")
+    is_current, stale_reasons = evaluation_freshness(request.user, state, shown)
+    if not is_current:
+        detail = "; ".join(stale_reasons)
+        messages.error(request, f"A avaliacao exibida esta desatualizada ({detail}). Execute o Gate novamente.")
         return redirect("laboratorio:gate")
     fresh = evaluate_gate(request.user, state.candidate)
     if fresh.status != GateEvaluation.APPROVED:
@@ -326,7 +354,7 @@ def _report_markdown(report, owner):
     executions = owner.test_executions.filter(status=TestExecution.COMPLETED)[:3]
     reviewed_cases = list(owner.test_cases.filter(mandatory=False, reviewed=True).exclude(identifier="T-FRACO-DESCONTO").order_by("-updated_at")[:2])
     case_lines = []
-    all_runs = list(owner.test_executions.filter(status=TestExecution.COMPLETED).order_by("-created_at"))
+    all_runs = list(owner.test_executions.filter(status=TestExecution.COMPLETED).order_by("-created_at", "-pk"))
     for case in reviewed_cases:
         matched = None
         matched_run = None

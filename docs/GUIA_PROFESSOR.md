@@ -41,5 +41,4 @@ Os testes `T-CUP-EXPIRADO`, `T-CUP-PERCENTUAL`, `T-EST-LIMITE`, `T-PED-RECALCULO
 
 ## Restauração
 
-Interface: **Laboratório → Restaurar**, digitando `APAGAR`. Terminal: `python setup_lab.py reset --confirm`. Reiniciar não restaura.
-
+Interface: **Opções da atividade → Reiniciar atividade**, digitando `APAGAR`. Terminal: `python setup_lab.py reset --confirm`. Apenas reiniciar o servidor não restaura dados.

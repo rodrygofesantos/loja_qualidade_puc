@@ -8,6 +8,87 @@ from laboratorio.models import GateConfig, GateEvaluation, RiskPrediction, TestE
 from laboratorio.scenarios import BUGS
 
 
+def evaluation_freshness(owner, state, evaluation):
+    """Confere se uma avaliação ainda representa todo o contexto selecionado."""
+    if evaluation is None:
+        return False, []
+
+    snapshot = evaluation.evidence_snapshot or {}
+    reasons = []
+    if evaluation.candidate_id != state.candidate_id:
+        reasons.append("o candidato selecionado mudou")
+    if snapshot.get("candidate_revision") != state.candidate.code_revision:
+        reasons.append("a revisão do candidato mudou")
+    if snapshot.get("changed_modules") != state.candidate.changed_modules:
+        reasons.append("os módulos alterados do candidato mudaram")
+    if snapshot.get("open_critical_defects") != state.candidate.open_critical_defects:
+        reasons.append("os defeitos críticos declarados mudaram")
+    if snapshot.get("declared_fixes") != state.candidate.declared_fixes:
+        reasons.append("as correções declaradas mudaram")
+    if (
+        snapshot.get("scenario_code") != state.scenario.code
+        or snapshot.get("scenario_revision") != state.scenario.revision
+    ):
+        reasons.append("o cenário selecionado ou sua revisão mudou")
+    if snapshot.get("scenario_bug_ids") != state.scenario.bug_ids:
+        reasons.append("os defeitos ativos do cenário mudaram")
+
+    current_config = GateConfig.objects.order_by("-version").first()
+    if current_config is None or evaluation.config_id != current_config.pk:
+        reasons.append("os critérios do Gate mudaram")
+
+    current_case_revisions = {
+        case.identifier: case.revision
+        for case in owner.test_cases.filter(mandatory=True).order_by("identifier")
+    }
+    if snapshot.get("mandatory_case_revisions") != current_case_revisions:
+        reasons.append("a suíte obrigatória mudou")
+
+    latest_execution = (
+        TestExecution.objects.filter(
+            owner=owner,
+            candidate=state.candidate,
+            scenario=state.scenario,
+            scenario_revision=state.scenario.revision,
+            code_revision=state.candidate.code_revision,
+            status=TestExecution.COMPLETED,
+            scope_kind="full",
+        )
+        .order_by("-created_at", "-pk")
+        .first()
+    )
+    latest_run_id = latest_execution.run_id if latest_execution else None
+    if snapshot.get("execution_run_id") != latest_run_id:
+        reasons.append("uma execução completa mais recente alterou as evidências")
+    elif TestExecution.objects.filter(
+        owner=owner,
+        code_revision=state.candidate.code_revision,
+        status=TestExecution.COMPLETED,
+        created_at__gt=evaluation.created_at,
+    ).exists():
+        reasons.append("novas execuções alteraram o conjunto de evidências")
+
+    model_version = snapshot.get("model_version")
+    if model_version:
+        current_scores = {
+            item.module: item.score
+            for item in RiskPrediction.objects.filter(
+                candidate=state.candidate,
+                model_version=model_version,
+                module__in=state.candidate.changed_modules,
+            )
+        }
+        snapshot_scores = {
+            module: score
+            for module, score in snapshot.get("risk_scores", {}).items()
+            if module in state.candidate.changed_modules
+        }
+        if current_scores != snapshot_scores:
+            reasons.append("as estimativas de risco mudaram")
+
+    return not reasons, reasons
+
+
 def correction_evidence(owner, candidate, bug_id, passing_execution=None):
     expected_requirement = BUGS.get(bug_id, {}).get("requirement")
     if expected_requirement is None:
@@ -15,7 +96,7 @@ def correction_evidence(owner, candidate, bug_id, passing_execution=None):
     executions = list(
         TestExecution.objects.filter(owner=owner, status=TestExecution.COMPLETED, code_revision=candidate.code_revision)
         .select_related("scenario", "candidate")
-        .order_by("-created_at")
+        .order_by("-created_at", "-pk")
     )
     if passing_execution is not None and passing_execution not in executions:
         executions.insert(0, passing_execution)
@@ -69,7 +150,7 @@ def evaluate_gate(owner, candidate, persist=True):
             status=TestExecution.COMPLETED,
             scope_kind="full",
         )
-        .order_by("-created_at")
+        .order_by("-created_at", "-pk")
         .first()
     )
     result_by_id = {result.get("identifier"): result for result in (execution.results if execution else [])}
@@ -158,8 +239,12 @@ def evaluate_gate(owner, candidate, persist=True):
     snapshot = {
         "candidate_code": candidate.code,
         "candidate_revision": candidate.code_revision,
+        "changed_modules": candidate.changed_modules,
+        "open_critical_defects": candidate.open_critical_defects,
+        "declared_fixes": candidate.declared_fixes,
         "scenario_code": candidate.scenario.code,
         "scenario_revision": candidate.scenario.revision,
+        "scenario_bug_ids": candidate.scenario.bug_ids,
         "execution_run_id": execution.run_id if execution else None,
         "model_version": model_version,
         "risk_scores": scores,

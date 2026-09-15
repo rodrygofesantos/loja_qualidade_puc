@@ -1,0 +1,6 @@
+<article class="indicator-card">
+  <p class="indicator-label">{{ label }}</p>
+  <p class="indicator-value">{{ value }}{% if total != None %}<span> de {{ total }}</span>{% elif unit %}<span>{{ unit }}</span>{% endif %}</p>
+  <p class="indicator-description">{{ description }}</p>
+  <a class="card-link" href="{% url url_name %}">{{ link_label }} <span aria-hidden="true">→</span></a>
+</article>

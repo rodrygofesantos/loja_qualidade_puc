@@ -16,7 +16,7 @@ Em **Dados**, localize uma duplicidade, um churn ausente e o vínculo `SIM-DEF-I
 
 ## 8–12 min — indicadores e risco
 
-No **Dashboard**, filtre um módulo. Diferencie:
+Em **Métricas**, filtre um módulo. Diferencie:
 
 - churn: linhas adicionadas + removidas;
 - frequência: commits distintos;
@@ -37,13 +37,12 @@ Cole somente o JSON em **Importar**. Revise requisito, entradas e esperado de ca
 
 Compare esperado e observado. Em **Cobertura**, distinga a seleção de dois casos da suíte obrigatória completa. Compare o teste fraco `T-FRACO-DESCONTO`, que só verifica aceitação, com `T-CUP-PERCENTUAL`, que verifica o desconto.
 
-## 24–27 min — Gate e bot
+## 24–27 min — Gate e assistente
 
-Execute o Gate. `APROVADO` exige tudo; `BLOQUEADO` indica violação conhecida; `EVIDENCIAS_INSUFICIENTES` indica lacuna sem violação conhecida. Pergunte ao bot por que bloqueou e qual módulo investigar. Ele só resume dados reais.
+Execute o Gate. `APROVADO` exige tudo; `BLOQUEADO` indica violação conhecida; `EVIDENCIAS_INSUFICIENTES` indica lacuna sem violação conhecida. Pergunte ao assistente por que bloqueou e qual módulo investigar. Ele só resume dados reais.
 
 ## 27–30 min — relatório
 
 Preencha contexto, tratamento, prioridade, casos, visualização, decisão, pendências, IA utilizada e checagens humanas. Marque o checklist sem pontuação e exporte Markdown ou HTML imprimível.
 
 Nunca use dados pessoais reais. O pacote externo contém só contexto e amostra fictícios.
-

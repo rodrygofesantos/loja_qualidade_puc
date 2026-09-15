@@ -1,9 +1,72 @@
 {% extends "base.html" %}
 {% block title %}Quality Gate · Laboratório{% endblock %}
-{% block content %}{% include "laboratorio/_nav.html" %}<p class="eyebrow">Motor determinístico versionado</p><h1>Quality Gate</h1><p class="lead">O bot e a justificativa humana não podem sobrepor o Gate. Uma liberação é apenas simulada e sempre revalidada no servidor.</p>
-{% if config %}<div class="grid grid-3"><div class="card"><span class="muted">Configuração</span><div class="metric">v{{ config.version }}</div><p>{{ config.note }}</p></div><div class="card"><span class="muted">Cobertura mínima</span><div class="metric">{{ config.coverage_threshold|floatformat:2 }}%</div></div><div class="card"><span class="muted">Risco bloqueia em</span><div class="metric">≥ {{ config.risk_threshold|floatformat:2 }}</div></div></div>{% endif %}
-<div class="actions"><form method="post">{% csrf_token %}<button class="button" type="submit">Avaliar candidato agora</button></form></div>
-{% for evaluation in evaluations %}<section class="card" style="margin-top:20px"><div class="actions"><div><p class="eyebrow">{{ evaluation.evaluation_id }} · configuração v{{ evaluation.config.version }}</p><h2><span class="status status-{{ evaluation.status }}">{{ evaluation.status }}</span></h2></div>{% if forloop.first %}<form method="post" action="{% url 'laboratorio:release' %}">{% csrf_token %}<input type="hidden" name="evaluation_id" value="{{ evaluation.evaluation_id }}"><button class="button {% if evaluation.status != 'APROVADO' %}button-danger{% endif %}" type="submit">Liberar release SIMULADA</button></form>{% endif %}</div><div class="grid grid-2">{% for rule in evaluation.rule_results %}<div class="card rule-row {{ rule.status }}"><p class="eyebrow">{{ rule.rule }}</p><span class="status status-{{ rule.status }}">{{ rule.status }}</span><p>{{ rule.detail }}</p></div>{% endfor %}</div><p class="small muted">Candidato {{ evaluation.evidence_snapshot.candidate_code }} · cenário {{ evaluation.evidence_snapshot.scenario_code }} · modelo {{ evaluation.evidence_snapshot.model_version|default:"ausente" }} · execução {{ evaluation.evidence_snapshot.execution_run_id|default:"ausente" }}</p></section>{% empty %}<div class="card">Ainda não há avaliação. Execute o Gate para obter APROVADO, BLOQUEADO ou EVIDENCIAS_INSUFICIENTES.</div>{% endfor %}
-<details class="card" style="margin-top:22px"><summary><strong>Criar nova versão dos limiares didáticos</strong></summary><form method="post" action="{% url 'laboratorio:gate_config' %}" class="stack">{% csrf_token %}<label>Cobertura mínima (%)<input type="number" step="0.01" min="0" max="100" name="coverage_threshold" value="{{ config.coverage_threshold|default:80 }}"></label><label>Limiar de risco<input type="number" step="0.01" min="0" max="1" name="risk_threshold" value="{{ config.risk_threshold|default:0.8 }}"></label><label>Justificativa<input name="note" required></label><button class="button button-secondary" type="submit">Versionar critérios</button></form></details>
-{% endblock %}
+{% block content %}
+<p class="eyebrow">Motor determinístico versionado</p>
+<h1>Quality Gate</h1>
+<p class="lead">O assistente e a justificativa humana não podem sobrepor o Gate. Uma liberação é apenas simulada e sempre revalidada no servidor.</p>
 
+{% if gate_error %}
+  <div class="alert alert-error" role="alert"><strong>Erro na avaliação:</strong> {{ gate_error.message }}. Nenhum resultado válido foi produzido.</div>
+{% endif %}
+
+{% if config %}
+  <div class="grid grid-3">
+    <div class="card"><span class="muted">Configuração</span><div class="metric">v{{ config.version }}</div><p>{{ config.note }}</p></div>
+    <div class="card"><span class="muted">Cobertura mínima</span><div class="metric">{{ config.coverage_threshold|floatformat:2 }}%</div></div>
+    <div class="card"><span class="muted">Risco bloqueia em</span><div class="metric">≥ {{ config.risk_threshold|floatformat:2 }}</div></div>
+  </div>
+{% endif %}
+
+<div class="actions"><form method="post">{% csrf_token %}<button class="button" type="submit">Avaliar candidato agora</button></form></div>
+
+{% for evaluation in evaluations %}
+  <section class="card gate-history-card">
+    <div class="gate-history-header">
+      <div>
+        <p class="eyebrow">Configuração v{{ evaluation.config.version }} · {{ evaluation.created_at|date:"d/m/Y \à\s H:i" }}</p>
+        <h2><span class="status status-{{ evaluation.status }}">{{ evaluation.status }}</span></h2>
+      </div>
+      {% if forloop.first and evaluation.is_current %}
+        <form method="post" action="{% url 'laboratorio:release' %}">
+          {% csrf_token %}
+          <input type="hidden" name="evaluation_id" value="{{ evaluation.evaluation_id }}">
+          <button class="button {% if evaluation.status != 'APROVADO' %}button-danger{% endif %}" type="submit">Liberar release simulada</button>
+        </form>
+      {% endif %}
+    </div>
+    {% if not evaluation.is_current %}
+      <div class="inline-notice inline-notice-warning">
+        <strong>Avaliação desatualizada.</strong>
+        {% for reason in evaluation.stale_reasons %}{{ reason|capfirst }}{% if not forloop.last %}; {% else %}.{% endif %}{% endfor %}
+        Execute o Gate novamente antes de decidir.
+      </div>
+    {% endif %}
+    <div class="grid grid-2">
+      {% for rule in evaluation.rule_results %}
+        <div class="card rule-row {{ rule.status }}">
+          <p class="eyebrow">{{ rule.rule }}</p>
+          <span class="status status-{{ rule.status }}">{{ rule.status }}</span>
+          <p>{{ rule.detail }}</p>
+        </div>
+      {% endfor %}
+    </div>
+    <details class="technical-details">
+      <summary>Contexto e identificadores técnicos</summary>
+      <p>Avaliação {{ evaluation.evaluation_id }} · candidato {{ evaluation.evidence_snapshot.candidate_code }} · cenário {{ evaluation.evidence_snapshot.scenario_code }} · modelo {{ evaluation.evidence_snapshot.model_version|default:"ausente" }} · execução {{ evaluation.evidence_snapshot.execution_run_id|default:"ausente" }}</p>
+    </details>
+  </section>
+{% empty %}
+  <div class="card"><strong>Não avaliado.</strong> Execute o Gate para obter um resultado. Ausência de evidências não representa aprovação.</div>
+{% endfor %}
+
+<details class="card gate-config-panel">
+  <summary><strong>Criar nova versão dos limiares didáticos</strong></summary>
+  <form method="post" action="{% url 'laboratorio:gate_config' %}" class="stack">
+    {% csrf_token %}
+    <label>Cobertura mínima (%)<input type="number" step="0.01" min="0" max="100" name="coverage_threshold" value="{{ config.coverage_threshold|default:80 }}"></label>
+    <label>Limiar de risco<input type="number" step="0.01" min="0" max="1" name="risk_threshold" value="{{ config.risk_threshold|default:0.8 }}"></label>
+    <label>Justificativa<input name="note" required></label>
+    <button class="button button-secondary" type="submit">Versionar critérios</button>
+  </form>
+</details>
+{% endblock %}

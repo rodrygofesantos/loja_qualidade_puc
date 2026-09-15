@@ -1,4 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Restaurar · Laboratório{% endblock %}
-{% block content %}{% include "laboratorio/_nav.html" %}<p class="eyebrow">Ação explícita e destrutiva</p><h1>Restaurar progresso local</h1><div class="alert alert-error">Isso remove carrinho, pedidos, clientes editados, casos adicionais, execuções, avaliações e relatório da conta demonstrativa. Os arquivos brutos reproduzíveis continuam disponíveis.</div><form method="post" class="card stack" style="max-width:600px">{% csrf_token %}<label for="confirmation">Digite APAGAR para confirmar</label><input id="confirmation" name="confirmation" autocomplete="off"><button class="button button-danger" type="submit">Restaurar dados da demonstração</button></form>{% endblock %}
-
+{% block title %}Reiniciar atividade · Laboratório{% endblock %}
+{% block content %}
+<p class="eyebrow">Opção da atividade · ação destrutiva</p>
+<h1>Reiniciar atividade</h1>
+<p class="lead">Use esta opção somente para voltar ao estado inicial da demonstração.</p>
+<div class="alert alert-error" role="alert">
+  <strong>O progresso desta conta será apagado.</strong>
+  Serão removidos carrinho, pedidos, clientes editados, decisões de tratamento de dados, casos adicionais, execuções, avaliações do Gate, liberações simuladas e relatório. Produtos, cupons, casos obrigatórios e o contexto inicial serão recriados.
+</div>
+<p class="small muted">Os arquivos brutos reproduzíveis, o modelo treinado e o código do laboratório não são apagados.</p>
+<form method="post" class="card stack destructive-form">
+  {% csrf_token %}
+  <label for="confirmation">Digite APAGAR para confirmar que compreendeu as consequências</label>
+  <input id="confirmation" name="confirmation" autocomplete="off" required>
+  <button class="button button-danger" type="submit">Reiniciar atividade e apagar progresso</button>
+</form>
+{% endblock %}

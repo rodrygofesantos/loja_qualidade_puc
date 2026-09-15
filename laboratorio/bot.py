@@ -12,7 +12,7 @@ QUESTIONS = {
 
 
 def answer(owner, candidate, action):
-    evaluation = GateEvaluation.objects.filter(owner=owner, candidate=candidate).order_by("-created_at").first()
+    evaluation = GateEvaluation.objects.filter(owner=owner, candidate=candidate).order_by("-created_at", "-pk").first()
     if evaluation is None:
         return "Ainda nao existe avaliacao do Gate para este candidato. Execute o Gate; sem ela o bot nao infere motivos."
     rules = {item["rule"]: item for item in evaluation.rule_results}
@@ -41,4 +41,3 @@ def answer(owner, candidate, action):
         missing = [f"{item['rule']}: {item['detail']}" for item in evaluation.rule_results if item["status"] == "missing"]
         return " ".join(missing) if missing else "Nenhuma evidencia ausente foi registrada nesta avaliacao."
     return "Acao desconhecida. O bot aceita apenas as perguntas predefinidas exibidas na tela."
-
