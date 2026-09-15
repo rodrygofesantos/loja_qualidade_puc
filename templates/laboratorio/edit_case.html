@@ -1,0 +1,4 @@
+{% extends "base.html" %}
+{% block title %}Revisar caso · Laboratório{% endblock %}
+{% block content %}{% include "laboratorio/_nav.html" %}<p class="eyebrow">Revisão humana do oráculo</p><h1>{% if case %}Revisar {{ case.identifier }}{% else %}Novo caso adicional{% endif %}</h1><p class="lead">Confirme o requisito e calcule o esperado sem copiar o resultado observado da aplicação.</p><section class="card" style="max-width:800px"><form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<button class="button" type="submit">Salvar revisão</button></form></section>{% endblock %}
+

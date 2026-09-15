@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Entrar · Loja Qualidade{% endblock %}
+{% block content %}
+<section class="login-card">
+  <p class="eyebrow">Ambiente didatico local</p>
+  <h1>Entre no laboratorio</h1>
+  <p>Use apenas a conta demonstrativa. Nenhum dado pessoal real e necessario.</p>
+  {% if form.errors %}<div class="alert alert-error">Usuario ou senha invalidos.</div>{% endif %}
+  <form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<button class="button" type="submit">Entrar</button></form>
+  <div class="demo-credentials"><strong>Usuario:</strong> aluno<br><strong>Senha:</strong> Qualidade2026!</div>
+</section>
+{% endblock %}
+

@@ -1,0 +1,4 @@
+{% extends "base.html" %}
+{% block title %}Clientes fictícios · Loja Qualidade{% endblock %}
+{% block content %}<div class="actions"><div><p class="eyebrow">Dados apenas demonstrativos</p><h1>Clientes fictícios</h1></div><a class="button" href="{% url 'loja:customer_new' %}">Novo cliente</a></div><div class="table-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Cidade</th><th></th></tr></thead><tbody>{% for customer in customers %}<tr><td>{{ customer.name }}</td><td>{{ customer.email }}</td><td>{{ customer.city }}</td><td><a href="{% url 'loja:customer_edit' customer.pk %}">Editar</a></td></tr>{% empty %}<tr><td colspan="4">Nenhum cliente.</td></tr>{% endfor %}</tbody></table></div>{% endblock %}
+

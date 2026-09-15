@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Cenários · Laboratório{% endblock %}
+{% block content %}{% include "laboratorio/_nav.html" %}<p class="eyebrow">Contexto reproduzível</p><h1>Cenários e candidatos</h1><p class="lead">A alteração vale para novas operações. Históricos permanecem associados ao cenário e à revisão originais.</p>
+<form method="post" class="card stack" style="max-width:780px">{% csrf_token %}<p><label for="scenario">Cenário da loja e do executor</label><select id="scenario" name="scenario">{% for item in scenarios %}<option value="{{ item.pk }}" {% if item.pk == lab_state.scenario_id %}selected{% endif %}>{{ item.code }} — {{ item.name }}</option>{% endfor %}</select></p><p><label for="candidate">Candidato analisado</label><select id="candidate" name="candidate">{% for item in candidates %}<option value="{{ item.pk }}" {% if item.pk == lab_state.candidate_id %}selected{% endif %}>{{ item.code }} — {{ item.name }}</option>{% endfor %}</select></p><button class="button" type="submit">Aplicar novo contexto</button></form>
+<h2 style="margin-top:30px">Catálogo dos defeitos intencionais</h2><div class="grid grid-2">{% for bug_id, bug in bugs.items %}<article class="card"><p class="eyebrow">{{ bug_id }} · {{ bug.requirement }}</p><h3>{{ bug.name }}</h3><p><strong>Reprodução:</strong> {{ bug.reproduction }}</p><p><strong>Esperado:</strong> {{ bug.expected }}</p><p><strong>Observado:</strong> {{ bug.observed }}</p><p class="muted"><strong>Correção:</strong> {{ bug.correction }}</p></article>{% endfor %}</div>
+{% endblock %}
+

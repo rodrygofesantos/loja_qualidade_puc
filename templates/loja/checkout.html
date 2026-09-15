@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% load money %}
+{% block title %}Checkout · Loja Qualidade{% endblock %}
+{% block content %}
+<p class="eyebrow">Pagamento mock · nenhuma cobrança real</p><h1>Confirmar pedido</h1><div class="grid grid-2"><section class="card"><h2>Dados da simulação</h2>{% if totals %}<p>Subtotal: <strong>{{ totals.subtotal_cents|brl_cents }}</strong></p><p>Desconto: <strong>{{ totals.discount_cents|brl_cents }}</strong></p><p class="price">Total: {{ totals.total_cents|brl_cents }}</p>{% endif %}<p class="muted small">O servidor revalida total, estoque, chave e resultado do pagamento.</p></section><section class="card"><h2>Cliente e resultado</h2><form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<button class="button" type="submit">Executar checkout simulado</button></form><p class="small"><a href="{% url 'loja:customer_new' %}">Cadastrar cliente fictício</a></p></section></div>
+{% endblock %}
+

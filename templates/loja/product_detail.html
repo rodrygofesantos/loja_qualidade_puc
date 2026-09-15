@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% load money %}
+{% block title %}{{ product.name }} · Loja Qualidade{% endblock %}
+{% block content %}
+<p><a href="{% url 'loja:catalog' %}">← Voltar ao catálogo</a></p>
+<div class="grid grid-2"><div class="product-visual" style="height:320px" aria-hidden="true">{{ product.name|first }}</div><section><p class="eyebrow">{{ product.category.name }} · {{ product.sku }}</p><h1>{{ product.name }}</h1><p class="lead">{{ product.description }}</p><p class="price">{{ product.price_cents|brl_cents }}</p><p>Estoque atual: <strong>{{ product.stock }}</strong></p>{% if product.active %}<form method="post" action="{% url 'loja:cart_add' product.pk %}" class="filters">{% csrf_token %}<label>Quantidade<input type="number" min="1" step="1" name="quantity" value="1" required></label><button class="button" type="submit">Adicionar ao carrinho</button></form>{% else %}<div class="alert alert-warning">Produto inativo: REQ-CAT-001 impede sua inclusão.</div>{% endif %}</section></div>
+{% endblock %}
+

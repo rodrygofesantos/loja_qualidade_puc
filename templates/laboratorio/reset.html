@@ -1,0 +1,4 @@
+{% extends "base.html" %}
+{% block title %}Restaurar · Laboratório{% endblock %}
+{% block content %}{% include "laboratorio/_nav.html" %}<p class="eyebrow">Ação explícita e destrutiva</p><h1>Restaurar progresso local</h1><div class="alert alert-error">Isso remove carrinho, pedidos, clientes editados, casos adicionais, execuções, avaliações e relatório da conta demonstrativa. Os arquivos brutos reproduzíveis continuam disponíveis.</div><form method="post" class="card stack" style="max-width:600px">{% csrf_token %}<label for="confirmation">Digite APAGAR para confirmar</label><input id="confirmation" name="confirmation" autocomplete="off"><button class="button button-danger" type="submit">Restaurar dados da demonstração</button></form>{% endblock %}
+

@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% load money %}
+{% block title %}Catálogo · Loja Qualidade{% endblock %}
+{% block content %}
+<section class="hero"><p class="eyebrow">Loja virtual fictícia</p><h1>Catálogo para experimentar regras reais</h1><p class="lead">Opere a loja no cenário selecionado. Pedidos, estoque e pagamentos são apenas simulações locais.</p></section>
+<form method="get" class="filters" role="search">
+  <label>Busca<input type="search" name="q" value="{{ query }}" placeholder="Nome, SKU ou descrição"></label>
+  <label>Categoria<select name="categoria"><option value="">Todas</option>{% for category in categories %}<option value="{{ category.slug }}" {% if selected_category == category.slug %}selected{% endif %}>{{ category.name }}</option>{% endfor %}</select></label>
+  <button class="button" type="submit">Filtrar</button>
+</form>
+<div class="grid grid-3">
+{% for product in products %}
+  <article class="card product-card"><div class="product-visual" aria-hidden="true">{{ product.name|first }}</div><p class="eyebrow">{{ product.category.name }} · {{ product.sku }}</p><h2>{{ product.name }}</h2><p>{{ product.description|truncatewords:18 }}</p><p class="price">{{ product.price_cents|brl_cents }}</p><p class="muted">Estoque: {{ product.stock }} unidade{{ product.stock|pluralize }}</p><a class="button button-secondary" href="{% url 'loja:product_detail' product.pk %}">Ver produto</a></article>
+{% empty %}<div class="card"><h2>Nenhum produto encontrado</h2><p>Ajuste os filtros para continuar.</p></div>{% endfor %}
+</div>
+{% endblock %}
+
