@@ -1,0 +1,106 @@
+{% with current=request.resolver_match.url_name namespace=request.resolver_match.namespace %}
+<aside class="sidebar" id="sidebar" aria-label="Navegação da atividade" tabindex="-1">
+  <div class="sidebar-header">
+    <a class="brand" href="{% url 'laboratorio:overview' %}">
+      <span class="brand-mark" aria-hidden="true">Q</span>
+      <span>Loja Qualidade <small>laboratório didático</small></span>
+    </a>
+    <button class="sidebar-close" type="button" data-menu-close aria-label="Fechar menu">×</button>
+  </div>
+
+  {% if lab_state %}
+    <div class="sidebar-context" aria-label="Contexto selecionado">
+      <span>Contexto atual</span>
+      <strong>{{ lab_state.candidate.name }}</strong>
+      <small>{{ lab_state.scenario.name }}</small>
+    </div>
+  {% endif %}
+
+  <nav class="primary-nav" aria-label="Etapas do laboratório">
+    <div class="nav-group">
+      <span class="nav-group-label">Início</span>
+      <a href="{% url 'laboratorio:overview' %}" {% if current == 'overview' %}class="active" aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">⌂</span><span>Visão geral</span>
+      </a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Preparação</span>
+      <a href="{% url 'laboratorio:scenarios' %}" {% if current == 'scenarios' %}class="active" aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">◇</span><span>Cenários</span>
+      </a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Investigação</span>
+      <a href="{% url 'laboratorio:data_quality' %}" {% if current == 'data_quality' %}class="active" aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">▤</span><span>Dados</span>
+      </a>
+      <a href="{% url 'laboratorio:dashboard' %}" {% if current == 'dashboard' %}class="active" aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">▥</span><span>Métricas</span>
+      </a>
+      <a href="{% url 'laboratorio:prediction' %}" {% if current == 'prediction' %}class="active" aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">↗</span><span>Predição</span>
+      </a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Testes</span>
+      <a href="{% url 'laboratorio:test_cases' %}" {% if current == 'test_cases' or current == 'import_cases' or current == 'new_case' or current == 'edit_case' %}class="active" aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">✓</span><span>Casos de teste</span>
+      </a>
+      <a href="{% url 'laboratorio:executions' %}" {% if current == 'executions' or current == 'execution_detail' %}class="active" aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">▷</span><span>Execuções</span>
+      </a>
+      <a href="{% url 'laboratorio:coverage' %}" {% if current == 'coverage' %}class="active" aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">％</span><span>Cobertura</span>
+      </a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Decisão</span>
+      <a href="{% url 'laboratorio:evidence' %}" {% if current == 'evidence' %}class="active" aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">◆</span><span>Evidências</span>
+      </a>
+      <a href="{% url 'laboratorio:gate' %}" {% if current == 'gate' %}class="active" aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">◉</span><span>Quality Gate</span>
+      </a>
+      <a href="{% url 'laboratorio:report' %}" {% if current == 'report' %}class="active" aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">▧</span><span>Relatório</span>
+      </a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Ajuda</span>
+      <a href="{% url 'laboratorio:bot' %}" {% if current == 'bot' %}class="active" aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">?</span><span>Assistente</span>
+      </a>
+    </div>
+
+    <div class="nav-group practice-nav">
+      <span class="nav-group-label">Ambiente de prática</span>
+      <a href="{% url 'loja:catalog' %}" {% if namespace == 'loja' and current != 'cart' and current != 'orders' and current != 'order_detail' %}class="active" aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">▦</span><span>Loja</span>
+      </a>
+      <a href="{% url 'loja:cart' %}" {% if current == 'cart' %}class="active" aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">▱</span><span>Carrinho</span>
+      </a>
+      <a href="{% url 'loja:orders' %}" {% if current == 'orders' or current == 'order_detail' %}class="active" aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">▣</span><span>Pedidos</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <details class="sidebar-options" {% if current == 'reset' %}open{% endif %}>
+      <summary>Opções da atividade</summary>
+      <a href="{% url 'laboratorio:context_export' %}">Baixar materiais</a>
+      <a href="{% url 'laboratorio:reset' %}" class="danger-link{% if current == 'reset' %} active{% endif %}" {% if current == 'reset' %}aria-current="page"{% endif %}>Reiniciar atividade</a>
+    </details>
+    <form method="post" action="{% url 'logout' %}" class="logout-form">
+      {% csrf_token %}
+      <button class="link-button" type="submit">Sair da conta</button>
+    </form>
+  </div>
+</aside>
+{% endwith %}

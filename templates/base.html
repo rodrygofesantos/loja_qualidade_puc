@@ -4,42 +4,48 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#164e73">
   <title>{% block title %}Loja Qualidade PUC{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <script src="{% static 'js/app.js' %}" defer></script>
   {% block head %}{% endblock %}
 </head>
 <body>
-  <a class="skip-link" href="#conteudo">Pular para o conteudo</a>
-  <header class="site-header">
-    <div class="brand"><span class="brand-mark" aria-hidden="true">Q</span><span>Loja Qualidade <small>laboratorio didatico</small></span></div>
-    {% if user.is_authenticated %}
-      <button class="menu-button" type="button" aria-controls="nav" aria-expanded="false">Menu</button>
-      <nav id="nav" aria-label="Navegacao principal">
-        <a href="{% url 'loja:catalog' %}">Loja</a>
-        <a href="{% url 'loja:cart' %}">Carrinho</a>
-        <a href="{% url 'loja:orders' %}">Pedidos</a>
-        <a href="{% url 'laboratorio:overview' %}">Laboratorio</a>
-        <a href="{% url 'laboratorio:dashboard' %}">Dashboard</a>
-        <a href="{% url 'laboratorio:test_cases' %}">Testes</a>
-        <a href="{% url 'laboratorio:gate' %}">Gate</a>
-        <a href="{% url 'laboratorio:report' %}">Relatorio</a>
-      </nav>
-      <form method="post" action="{% url 'logout' %}" class="logout-form">{% csrf_token %}<button class="link-button" type="submit">Sair</button></form>
-    {% endif %}
-  </header>
-  {% if user.is_authenticated and lab_state %}
-    <div class="context-bar">
-      <span>Cenario ativo: <strong>{{ lab_state.scenario.name }}</strong></span>
-      <span>Candidato: <strong>{{ lab_state.candidate.code }}</strong></span>
-      <a href="{% url 'laboratorio:scenarios' %}">Alterar contexto</a>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  {% if user.is_authenticated %}
+    <div class="app-shell">
+      {% include "laboratorio/_sidebar.html" %}
+      <div class="app-main">
+        <header class="mobile-header">
+          <a class="mobile-brand" href="{% url 'laboratorio:overview' %}">
+            <span class="brand-mark" aria-hidden="true">Q</span>
+            <span>Loja Qualidade <small>laboratório didático</small></span>
+          </a>
+          <button class="menu-button" type="button" aria-controls="sidebar" aria-expanded="false">
+            <span aria-hidden="true">☰</span>
+            <span>Menu</span>
+          </button>
+        </header>
+  {% else %}
+    <div class="standalone-shell">
+      <header class="standalone-header">
+        <span class="brand-mark" aria-hidden="true">Q</span>
+        <span>Loja Qualidade PUC</span>
+      </header>
+  {% endif %}
+        <main id="conteudo" class="container" tabindex="-1">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}" role="{% if message.tags == 'error' %}alert{% else %}status{% endif %}">{{ message }}</div>
+          {% endfor %}
+          {% block content %}{% endblock %}
+        </main>
+        <footer>{% if user.is_authenticated %}Processamento local · Dados e releases fictícios · Nenhuma integração de pagamento real{% else %}Laboratório acadêmico com processamento local{% endif %}</footer>
+  {% if user.is_authenticated %}
+      </div>
+      <button class="sidebar-scrim" type="button" data-menu-close aria-label="Fechar menu"></button>
+    </div>
+  {% else %}
     </div>
   {% endif %}
-  <main id="conteudo" class="container">
-    {% for message in messages %}<div class="alert alert-{{ message.tags }}" role="status">{{ message }}</div>{% endfor %}
-    {% block content %}{% endblock %}
-  </main>
-  <footer>Processamento local · Dados e releases ficticios · Nenhuma integracao de pagamento real</footer>
 </body>
 </html>
-

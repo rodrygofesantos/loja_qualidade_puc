@@ -1,10 +1,135 @@
 {% extends "base.html" %}
-{% block title %}Laboratório de Qualidade{% endblock %}
-{% block content %}{% include "laboratorio/_nav.html" %}
-<section class="hero"><p class="eyebrow">Engenharia de Qualidade com IA e Análise de Dados</p><h1>Investigue. Teste. Decida com evidências.</h1><p class="lead">Atividade aberta e não avaliativa de aproximadamente 30 minutos. Você não precisa editar Python: opere a loja, analise dados e justifique uma release simulada.</p></section>
-<div class="grid grid-4"><div class="card"><span class="muted">Candidato</span><div class="metric">{{ candidate.code }}</div><p>{{ candidate.name }}</p></div><div class="card"><span class="muted">Cenário</span><div class="metric">{{ scenario.bug_ids|length }}</div><p>defeito{{ scenario.bug_ids|length|pluralize }} ativo{{ scenario.bug_ids|length|pluralize }}</p></div><div class="card"><span class="muted">Casos</span><div class="metric">{{ test_count }}</div><p>obrigatórios e adicionais</p></div><div class="card"><span class="muted">Último Gate</span><div class="metric" style="font-size:18px">{% if latest_gate %}{{ latest_gate.status }}{% else %}Não avaliado{% endif %}</div><p>{% if latest_gate %}{{ latest_gate.evaluation_id|truncatechars:20 }}{% else %}Evidência ainda ausente{% endif %}</p></div></div>
-<h2 style="margin-top:32px">Percurso sugerido</h2><div class="timeline"><div><strong>0–3 min</strong>Escolher candidato e critérios</div><div><strong>3–8 min</strong>Investigar e tratar dados</div><div><strong>8–12 min</strong>Interpretar risco</div><div><strong>12–20 min</strong>Propor e executar testes</div><div><strong>20–24 min</strong>Examinar cobertura</div><div><strong>24–27 min</strong>Consultar Gate e bot</div><div><strong>27–30 min</strong>Concluir relatório</div></div>
-<div class="actions"><a class="button" href="{% url 'laboratorio:scenarios' %}">Começar pelo contexto</a><a class="button button-secondary" href="{% url 'loja:catalog' %}">Operar a loja</a><a class="button button-secondary" href="{% url 'laboratorio:context_export' %}">Exportar contexto fictício</a></div>
-<div class="alert alert-warning"><strong>Três recursos diferentes:</strong> o classificador estima risco com dados sintéticos; o bot resume regras e evidências; uma IA generativa externa opcional apenas propõe casos que você deve revisar.</div>
-{% endblock %}
+{% block title %}Visão geral da atividade · Loja Qualidade{% endblock %}
+{% block content %}
+<header class="overview-header">
+  <div>
+    <p class="eyebrow">Engenharia de Qualidade com IA e Análise de Dados</p>
+    <h1>Visão geral da atividade</h1>
+    <p class="overview-tagline">Investigue. Teste. Decida com evidências.</p>
+    <p class="activity-meta">Atividade não avaliativa <span aria-hidden="true">·</span> Aproximadamente 30 minutos <span aria-hidden="true">·</span> Sem edição de código</p>
+  </div>
+</header>
 
+<section class="context-strip" aria-labelledby="context-title">
+  <div class="context-heading">
+    <p class="section-kicker" id="context-title">Contexto da análise</p>
+    <a href="{% url 'laboratorio:scenarios' %}">Alterar contexto</a>
+  </div>
+  <div class="context-items">
+    <div>
+      <span>Candidato</span>
+      <strong>{{ candidate.name }}</strong>
+      <small>Identificador {{ candidate.code }} · revisão {{ candidate.code_revision }}</small>
+    </div>
+    <div>
+      <span>Cenário</span>
+      <strong>{{ scenario.name }}</strong>
+      <small>Identificador {{ scenario.code }} · revisão {{ scenario.revision }}</small>
+    </div>
+    <div class="context-count">
+      <span>Defeitos intencionais ativos</span>
+      <strong>{{ scenario_bug_count }}</strong>
+      <small>Quantidade definida pelo cenário</small>
+    </div>
+  </div>
+</section>
+
+<section class="next-action" aria-labelledby="next-action-title">
+  <div class="next-action-icon" aria-hidden="true">→</div>
+  <div class="next-action-copy">
+    <p class="section-kicker">Próxima ação recomendada</p>
+    <h2 id="next-action-title">{{ next_action.label }}</h2>
+    <p>{{ next_action.description }} A recomendação usa apenas registros salvos nesta atividade.</p>
+  </div>
+  <div class="next-action-links">
+    <a class="button" href="{% url next_action.url_name %}">{{ next_action.label }}</a>
+    <a href="{% url 'loja:catalog' %}">Operar a loja</a>
+  </div>
+</section>
+
+<section class="dashboard-section" aria-labelledby="indicators-title">
+  <div class="section-heading">
+    <div>
+      <p class="section-kicker">Situação da atividade</p>
+      <h2 id="indicators-title">Indicadores orientados à decisão</h2>
+    </div>
+    <div class="progress-summary">
+      <strong>{{ completed_count }} de 7 etapas concluídas</strong>
+      <span>{{ activity_status }} · {{ progress_percent }}%</span>
+    </div>
+  </div>
+  <progress class="activity-progress" value="{{ completed_count }}" max="7">{{ progress_percent }}%</progress>
+
+  <div class="indicator-grid">
+    {% include "laboratorio/_indicator.html" with label="Casos obrigatórios executados" value=tests.executed total=tests.total description="Resultado compatível mais recente de cada caso na revisão atual." url_name="laboratorio:test_cases" link_label="Ver casos de teste" %}
+
+    <article class="indicator-card">
+      <p class="indicator-label">Resultados dos testes</p>
+      <div class="result-breakdown" aria-label="{{ tests.passed }} aprovados, {{ tests.failed }} reprovados e {{ tests.not_run }} não executados">
+        <span class="result-pass"><strong>{{ tests.passed }}</strong> aprovados</span>
+        <span class="result-fail"><strong>{{ tests.failed }}</strong> reprovados</span>
+        <span class="result-missing"><strong>{{ tests.not_run }}</strong> não executados</span>
+      </div>
+      <p class="indicator-description">Escopo: casos obrigatórios, candidato e cenário atuais.</p>
+      <a class="card-link" href="{% url 'laboratorio:executions' %}">Ver execuções <span aria-hidden="true">→</span></a>
+    </article>
+
+    <article class="indicator-card">
+      <p class="indicator-label">Cobertura da suíte completa</p>
+      {% if coverage and coverage.coverage_percent != None %}
+        <p class="indicator-value">{{ coverage.coverage_percent|floatformat:2 }}<span>%</span></p>
+        <p class="indicator-description">{{ coverage.coverage_lines }} de {{ coverage.coverage_considered }} linhas em {{ coverage.coverage_scope }}.</p>
+      {% else %}
+        <p class="indicator-empty">Ausente</p>
+        <p class="indicator-description">Nenhuma execução completa compatível produziu cobertura.</p>
+      {% endif %}
+      <a class="card-link" href="{% url 'laboratorio:coverage' %}">Examinar cobertura <span aria-hidden="true">→</span></a>
+    </article>
+
+    <article class="indicator-card">
+      <p class="indicator-label">Resultado do Quality Gate</p>
+      <div class="indicator-status">{% include "laboratorio/_status_badge.html" with status_class=gate_kind status_label=gate_label %}</div>
+      <p class="indicator-description">
+        {% if gate_current %}Avaliação compatível com as evidências atuais.
+        {% elif latest_gate %}O último resultado precisa ser reavaliado.
+        {% else %}Ainda não existe decisão do motor de regras.{% endif %}
+      </p>
+      <a class="card-link" href="{% url 'laboratorio:gate' %}">Consultar Gate <span aria-hidden="true">→</span></a>
+    </article>
+  </div>
+</section>
+
+{% include "laboratorio/_gate_panel.html" %}
+
+<section class="dashboard-section" aria-labelledby="journey-title">
+  <div class="section-heading">
+    <div>
+      <p class="section-kicker">Percurso da atividade</p>
+      <h2 id="journey-title">Acompanhe os artefatos que você produziu</h2>
+    </div>
+    <p class="section-support">Abrir uma página não conclui uma etapa. Os estados abaixo são derivados de seleções, execuções, avaliações e conteúdo salvos.</p>
+  </div>
+  {% include "laboratorio/_progress.html" %}
+</section>
+
+<section class="info-panel" aria-labelledby="sources-title">
+  <div>
+    <p class="section-kicker">Leitura responsável</p>
+    <h2 id="sources-title">Cada resultado tem uma origem diferente</h2>
+  </div>
+  <div class="source-grid">
+    <div><strong>Predição</strong><span>Estimativa de risco calculada com dados sintéticos; não demonstra causalidade.</span></div>
+    <div><strong>Assistente</strong><span>Explica regras e evidências registradas; não altera o resultado do Gate.</span></div>
+    <div><strong>Casos sugeridos</strong><span>Propostas externas precisam de revisão humana antes da execução.</span></div>
+  </div>
+</section>
+
+<details class="materials-panel">
+  <summary>Materiais da atividade</summary>
+  <div class="materials-content">
+    <p>Baixe o contexto fictício e o contrato usado para importar casos sem expor dados reais.</p>
+    <a href="{% url 'laboratorio:context_export' %}">Baixar pacote de contexto</a>
+    <a href="{% url 'laboratorio:schema_download' %}">Baixar schema JSON</a>
+  </div>
+</details>
+{% endblock %}

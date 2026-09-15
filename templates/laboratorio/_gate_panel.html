@@ -1,0 +1,43 @@
+<section class="gate-panel gate-panel-{{ gate_kind }}" aria-labelledby="gate-summary-title">
+  <div class="gate-panel-header">
+    <div>
+      <p class="section-kicker">Decisão do motor de regras</p>
+      <h2 id="gate-summary-title">Quality Gate</h2>
+    </div>
+    {% include "laboratorio/_status_badge.html" with status_class=gate_kind status_label=gate_label %}
+  </div>
+
+  {% if gate_error %}
+    <p><strong>A avaliação não produziu um resultado válido.</strong> {{ gate_error }}</p>
+    <p class="source-note">Falha de consulta não é interpretada como aprovação nem como valor zero.</p>
+  {% elif latest_gate %}
+    {% if not gate_current %}
+      <div class="inline-notice inline-notice-warning">
+        <strong>Este resultado não representa mais o contexto atual.</strong>
+        <ul>{% for reason in gate_stale_reasons %}<li>{{ reason|capfirst }}.</li>{% endfor %}</ul>
+      </div>
+    {% elif gate_issues %}
+      <p class="gate-explanation">Critérios que exigem atenção:</p>
+      <ul class="gate-rules">
+        {% for rule in gate_issues %}
+          <li><strong>{{ rule.rule }}:</strong> {{ rule.detail }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="gate-explanation">Todos os critérios disponíveis foram atendidos pelo contexto avaliado.</p>
+    {% endif %}
+    <dl class="gate-metadata">
+      <div><dt>Candidato avaliado</dt><dd>{{ latest_gate.candidate.name }} <span>({{ latest_gate.evidence_snapshot.candidate_code }})</span></dd></div>
+      <div><dt>Avaliado em</dt><dd>{{ latest_gate.created_at|date:"d/m/Y \à\s H:i" }}</dd></div>
+      <div><dt>Evidência de execução</dt><dd>{{ latest_gate.evidence_snapshot.execution_run_id|default:"Ausente" }}</dd></div>
+    </dl>
+    <details class="technical-details">
+      <summary>Identificadores técnicos</summary>
+      <p>{{ latest_gate.evaluation_id }} · configuração v{{ latest_gate.config.version }} · revisão {{ latest_gate.evidence_snapshot.candidate_revision }} · modelo {{ latest_gate.evidence_snapshot.model_version|default:"ausente" }}</p>
+    </details>
+  {% else %}
+    <p><strong>Nenhuma avaliação foi executada para este candidato.</strong></p>
+    <p class="source-note">Sem avaliação, o estado permanece “Não avaliado”; a ausência de evidência nunca representa aprovação.</p>
+  {% endif %}
+  <a class="card-link" href="{% url 'laboratorio:gate' %}">Ver detalhes da avaliação <span aria-hidden="true">→</span></a>
+</section>

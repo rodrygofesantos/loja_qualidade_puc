@@ -1,4 +1,4 @@
-# Quality Gate e quality bot
+# Quality Gate e assistente de qualidade
 
 ## Critérios iniciais
 
@@ -17,7 +17,6 @@ Violação conhecida produz `BLOQUEADO`, mesmo com lacunas adicionais. Sem viola
 
 Alterar limiares cria `GateConfig` nova e não reescreve avaliações. Alterar casos, cenário, código ou modelo deixa o snapshot anterior incompatível. O endpoint de liberação verifica a avaliação exibida, reexecuta o Gate e registra somente `ReleaseSimulation`; não publica nada.
 
-## Bot
+## Assistente
 
-O bot oferece seis perguntas fechadas. Lê a última avaliação e execução e inclui IDs/valores. “Qual módulo?” escolhe o maior score e avisa que isso é prioridade estatística, não causa. Se dado não existe, indica a evidência ausente. Ele não executa pagamento/teste, confirma correção, muda Gate ou libera candidato.
-
+O assistente oferece seis perguntas fechadas. Lê a última avaliação e execução e inclui IDs/valores. “Qual módulo?” escolhe o maior score e avisa que isso é prioridade estatística, não causa. Se dado não existe, indica a evidência ausente. Ele não executa pagamento/teste, confirma correção, muda Gate ou libera candidato.
