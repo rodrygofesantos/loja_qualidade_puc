@@ -1,0 +1,45 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Loja Qualidade PUC{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="{% static 'js/app.js' %}" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteudo</a>
+  <header class="site-header">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">Q</span><span>Loja Qualidade <small>laboratorio didatico</small></span></div>
+    {% if user.is_authenticated %}
+      <button class="menu-button" type="button" aria-controls="nav" aria-expanded="false">Menu</button>
+      <nav id="nav" aria-label="Navegacao principal">
+        <a href="{% url 'loja:catalog' %}">Loja</a>
+        <a href="{% url 'loja:cart' %}">Carrinho</a>
+        <a href="{% url 'loja:orders' %}">Pedidos</a>
+        <a href="{% url 'laboratorio:overview' %}">Laboratorio</a>
+        <a href="{% url 'laboratorio:dashboard' %}">Dashboard</a>
+        <a href="{% url 'laboratorio:test_cases' %}">Testes</a>
+        <a href="{% url 'laboratorio:gate' %}">Gate</a>
+        <a href="{% url 'laboratorio:report' %}">Relatorio</a>
+      </nav>
+      <form method="post" action="{% url 'logout' %}" class="logout-form">{% csrf_token %}<button class="link-button" type="submit">Sair</button></form>
+    {% endif %}
+  </header>
+  {% if user.is_authenticated and lab_state %}
+    <div class="context-bar">
+      <span>Cenario ativo: <strong>{{ lab_state.scenario.name }}</strong></span>
+      <span>Candidato: <strong>{{ lab_state.candidate.code }}</strong></span>
+      <a href="{% url 'laboratorio:scenarios' %}">Alterar contexto</a>
+    </div>
+  {% endif %}
+  <main id="conteudo" class="container">
+    {% for message in messages %}<div class="alert alert-{{ message.tags }}" role="status">{{ message }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer>Processamento local · Dados e releases ficticios · Nenhuma integracao de pagamento real</footer>
+</body>
+</html>
+

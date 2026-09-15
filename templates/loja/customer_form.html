@@ -1,0 +1,4 @@
+{% extends "base.html" %}
+{% block title %}Cliente fictício · Loja Qualidade{% endblock %}
+{% block content %}<p class="eyebrow">Não use dados pessoais reais</p><h1>{% if customer %}Editar{% else %}Novo{% endif %} cliente fictício</h1><section class="card" style="max-width:650px"><form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<button class="button" type="submit">Salvar</button></form></section>{% endblock %}
+

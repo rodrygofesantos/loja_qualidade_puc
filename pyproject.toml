@@ -1,0 +1,27 @@
+[project]
+name = "loja-qualidade-puc"
+version = "1.0.0"
+description = "Laboratorio didatico de engenharia de qualidade orientada por dados"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py"]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+  "laboratorio: casos que medem as regras comerciais no laboratorio",
+  "engenharia: verificacoes internas do proprio laboratorio",
+]
+filterwarnings = [
+  "ignore:Setting the shape on a NumPy array has been deprecated.*:DeprecationWarning:joblib.numpy_pickle",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["loja", "laboratorio"]
+omit = ["*/migrations/*", "*/management/*", "*/apps.py", "*/admin.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
