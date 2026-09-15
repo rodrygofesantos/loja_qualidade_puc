@@ -54,7 +54,7 @@ def evaluation_freshness(owner, state, evaluation):
             status=TestExecution.COMPLETED,
             scope_kind="full",
         )
-        .order_by("-created_at")
+        .order_by("-created_at", "-pk")
         .first()
     )
     latest_run_id = latest_execution.run_id if latest_execution else None
@@ -96,7 +96,7 @@ def correction_evidence(owner, candidate, bug_id, passing_execution=None):
     executions = list(
         TestExecution.objects.filter(owner=owner, status=TestExecution.COMPLETED, code_revision=candidate.code_revision)
         .select_related("scenario", "candidate")
-        .order_by("-created_at")
+        .order_by("-created_at", "-pk")
     )
     if passing_execution is not None and passing_execution not in executions:
         executions.insert(0, passing_execution)
@@ -150,7 +150,7 @@ def evaluate_gate(owner, candidate, persist=True):
             status=TestExecution.COMPLETED,
             scope_kind="full",
         )
-        .order_by("-created_at")
+        .order_by("-created_at", "-pk")
         .first()
     )
     result_by_id = {result.get("identifier"): result for result in (execution.results if execution else [])}

@@ -27,7 +27,7 @@ def _compatible_executions(owner, state):
         scenario_revision=state.scenario.revision,
         code_revision=state.candidate.code_revision,
         status=TestExecution.COMPLETED,
-    ).order_by("-created_at")
+    ).order_by("-created_at", "-pk")
 
 
 def _test_summary(owner, state):
@@ -94,6 +94,7 @@ def build_activity_summary(owner, state):
     latest_gate = (
         GateEvaluation.objects.filter(owner=owner, candidate=state.candidate)
         .select_related("candidate", "config")
+        .order_by("-created_at", "-pk")
         .first()
     )
     gate_current, gate_stale_reasons = evaluation_freshness(owner, state, latest_gate)

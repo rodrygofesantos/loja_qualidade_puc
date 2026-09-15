@@ -285,7 +285,8 @@ def gate(request):
         return redirect("laboratorio:gate")
     evaluations = list(
         GateEvaluation.objects.filter(owner=request.user, candidate=state.candidate)
-        .select_related("candidate", "config")[:10]
+        .select_related("candidate", "config")
+        .order_by("-created_at", "-pk")[:10]
     )
     for evaluation in evaluations:
         evaluation.is_current, evaluation.stale_reasons = evaluation_freshness(
@@ -353,7 +354,7 @@ def _report_markdown(report, owner):
     executions = owner.test_executions.filter(status=TestExecution.COMPLETED)[:3]
     reviewed_cases = list(owner.test_cases.filter(mandatory=False, reviewed=True).exclude(identifier="T-FRACO-DESCONTO").order_by("-updated_at")[:2])
     case_lines = []
-    all_runs = list(owner.test_executions.filter(status=TestExecution.COMPLETED).order_by("-created_at"))
+    all_runs = list(owner.test_executions.filter(status=TestExecution.COMPLETED).order_by("-created_at", "-pk"))
     for case in reviewed_cases:
         matched = None
         matched_run = None

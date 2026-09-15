@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 import pytest
+from django.utils import timezone
 
 from laboratorio.activity import build_activity_summary
 from laboratorio.gate import evaluate_gate, evaluation_freshness
@@ -50,7 +51,7 @@ def test_initial_activity_summary_never_treats_missing_evidence_as_success(demo_
 def test_test_summary_uses_latest_compatible_result_for_each_current_case(demo_user):
     state = demo_user.lab_state
     first, second = list(demo_user.test_cases.filter(mandatory=True)[:2])
-    make_execution(
+    older = make_execution(
         demo_user,
         state.candidate,
         state.scenario,
@@ -59,7 +60,7 @@ def test_test_summary_uses_latest_compatible_result_for_each_current_case(demo_u
             {"identifier": second.identifier, "revision": second.revision, "outcome": "passed"},
         ],
     )
-    make_execution(
+    newer = make_execution(
         demo_user,
         state.candidate,
         state.scenario,
@@ -68,6 +69,8 @@ def test_test_summary_uses_latest_compatible_result_for_each_current_case(demo_u
             {"identifier": second.identifier, "revision": second.revision, "outcome": "not_run"},
         ],
     )
+    same_timestamp = timezone.now()
+    ExecutionRecord.objects.filter(pk__in=[older.pk, newer.pk]).update(created_at=same_timestamp)
 
     tests = build_activity_summary(demo_user, state)["tests"]
 
